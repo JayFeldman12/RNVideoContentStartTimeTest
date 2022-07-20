@@ -1,0 +1,42 @@
+diff --git a/node_modules/react-native-video/Video.js b/node_modules/react-native-video/Video.js
+index dad262b..0ba1ed6 100644
+--- a/node_modules/react-native-video/Video.js
++++ b/node_modules/react-native-video/Video.js
+@@ -271,6 +271,7 @@ export default class Video extends Component {
+     const resizeMode = this.props.resizeMode;
+     const source = resolveAssetSource(this.props.source) || {};
+     const shouldCache = !source.__packager_asset;
++    const contentStartTime = this.props.contentStartTime;
+ 
+     let uri = source.uri || '';
+     if (uri && uri.match(/^\//)) {
+@@ -303,6 +304,7 @@ export default class Video extends Component {
+     Object.assign(nativeProps, {
+       style: [styles.base, nativeProps.style],
+       resizeMode: nativeResizeMode,
++      contentStartTime,
+       src: {
+         uri,
+         isNetwork,
+diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
+index 9a790fd..355dbcd 100644
+--- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
++++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
+@@ -624,11 +624,14 @@ class ReactExoplayerView extends FrameLayout implements
+             }
+         }
+ 
+-        boolean haveResumePosition = resumeWindow != C.INDEX_UNSET;
+-        if (haveResumePosition) {
++        boolean useContentStartTime = this.contentStartTime > 0;
++        boolean useResumePosition = resumeWindow != C.INDEX_UNSET && resumePosition > 0;
++        if (useResumePosition) {
+             player.seekTo(resumeWindow, resumePosition);
++        } else if (useContentStartTime) {
++            this.seekTo(this.contentStartTime * 1000); // sec to ms
+         }
+-        player.prepare(mediaSource, !haveResumePosition, false);
++        player.prepare(mediaSource, !useResumePosition && !useContentStartTime, false);
+         playerNeedsSource = false;
+ 
+         reLayout(exoPlayerView);
